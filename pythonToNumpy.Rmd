@@ -217,4 +217,58 @@ x=add_python([1],[2])
 print(x)
 ```
 
-Using numpy
+Using numpy the solution from above can be vectorized.
+Using the numpy approach is an order of magnitude faster than using the first approach.
+```{python}
+import numpy as np
+def add_numpy(Z1,Z2):
+    return np.add(Z1,Z2)
+
+x=add_numpy([1,2],[2,3])
+print(x)
+```
+
+Not only is the second approach using numpy faster than the first approach, but it naturally adapts to the shape of Z1 and Z2.
+For instance if Z1 and Z2 were both lists, the first approach would simply combine the lists rather than add the elements together.
+Because numpy can adapt to the shape of Z1 Z2, even if Z1 and Z2 were lists, it would add the elements together.
+In the following examples, the first concatenates the two lists together, the second concatenates the internal lists together, and
+the last function adds the elements contained within the lists together.
+```{python}
+import numpy as np
+# create Z1 and Z2 as lists
+Z1 = [[1, 2], [3, 4]]
+Z2 = [[5, 6], [7, 8]]
+
+print('non-numpy approach')
+print(Z1 + Z2)
+
+print('still non-numpy approach')
+def add_python(Z1, Z2):
+    return [z1+z2 for (z1,z2) in zip(Z1,Z2)]
+x=add_python(Z1,Z2)
+print(x)
+
+print('numpy approach')
+def add_numpy(Z1,Z2):
+    return np.add(Z1,Z2)
+x=add_numpy(Z1,Z2)
+print(x)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
