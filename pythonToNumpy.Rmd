@@ -1,0 +1,220 @@
+---
+title: "Python To Numpy"
+output: html_document
+---
+
+Dependencies
+```{r}
+install.packages('rmarkdown')
+```
+
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+plot(cars)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+This notebook follows the textbook found here: http://www.labri.fr/perso/nrougier/from-python-to-numpy/
+It might be helpful to also look at the official numpy tutorial here: https://docs.scipy.org/doc/numpy-dev/user/quickstart.html
+Here are 100 numpy exercises: http://www.labri.fr/perso/nrougier/teaching/numpy.100/index.html
+
+3.1
+The following code creates an array of ones that is 4,000,000 elements long and of datatype float32. All elements in this array are then set to zero.
+By casting the array as a larger data type like float64, the computation speed increases by about 25%. But by casting the array as a byte array like
+int8, speed is increased by about 50%.
+```{python}
+import numpy as np
+Z = np.ones(4*1000000, np.float32)
+Z[...] = 0
+Z.view(np.float64)[...] = 0
+Z.view(np.int8)[...] = 0
+```
+
+An array is mostly a contiguous block of memory whose parts can be accessed using an indexing scheme.
+Such indexing scheme is in turn defined by a shape and a data type and this is precisely what is needed when you define a new array.
+Because the items in the following array are of type int16, they each have a size of 2 bytes.
+```{python}
+import numpy as np
+Z = np.arange(9).reshape(3,3).astype(np.int16)
+print(Z)
+print(Z.itemsize) # size of each element
+print(Z.shape) # array shape
+print(Z.ndim) # number of dimensions in the array
+```
+
+Arrays are stored as contiguous blocks of memory, and the amount of memory to traverse in order to reach the next element is called a stride.
+More info about strides: https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.strides.html#numpy.ndarray.strides
+In the following example array Z contains elements that are of type int16 meaning that each element takes up 2 bytes of data, meaning the entire array is 20 bytes.
+Starting at the first element, in order to get to the next element, we need to skip 2 bytes, meaning that the stride length is 2.
+```{python}
+import numpy as np
+Z = np.arange(9).reshape(3,3).astype(np.int16)
+strides = Z.shape[1]*Z.itemsize, Z.itemsize
+print(strides)
+print(Z.strides) # strides is already a built in function
+```
+
+With the information from strides, we can access a specific item using an index tuple using start and end offsets. The idea is that in the below vector each item will be
+a stride of 2 bytes. So if we want to get to the third item we need a start_offset of 4 bytes and an end offset of 6 bytes. This will access the two bytes of the third item.
+```{python}
+import numpy as np
+Z = np.arange(9).reshape(3,3).astype(np.int16)
+index = 1,1
+offset_start = 0
+offset_end = 0
+print(Z)
+print(Z[index])
+
+offset = 0
+for i in range(Z.ndim):
+    offset_start += Z.strides[i]*index[i]
+offset_end = offset_start + Z.itemsize
+print(offset_start,offset_end)
+V = Z[:2,::2]
+print(V)
+```
+
+3.3 Views and Copies
+Indexing arrays refers to any use of the square brackets ([]) to index array values. So this can simply mean accessing an element by its index. A simple example shown below is single element indexing.
+Simple indexing will always show a view of the selected array, while advanced indexing will return an actual copy of the array.
+```{python}
+import numpy as np
+x = np.arange(10)
+print(x[2], x[-2])
+```
+
+Numpy arrays also support multidimensional indexing for multidimensional arrays. This means that each dimension does not need to be separated by its own set of brackets.
+If the array is indexed using fewer dimensions than are contained in an array, like x[0] when there are two dimensions, an entire piece of the array is returned.
+```{python}
+import numpy as np
+x = np.arange(10)
+x.shape = [2,5] # x is now a 2-dimensional array
+print(x)
+print(x[1,3])
+print(x[1][3]) # indexing can be separated into individual brackets
+print(x[1,-1])
+print(x[0]) # subdimensional array
+```
+
+Below illustrates the difference between indexing and fancy/advanced indexing.
+```{python}
+import numpy as np
+
+# simple indexing
+print('Simple Indexing')
+Z = np.arange(9)
+Z_view =Z[:3] # start at first element and go to the third
+print('Z:')
+print(Z)
+print('Z_view')
+print(Z_view)
+Z_view[...] = 0 # this will modify the original array
+print('Z:')
+print(Z)
+
+# fancy indexing
+print('Fancy Indexing')
+Z = np.arange(9)
+Z_copy = Z[[0,1,2]]
+Z_copy[...] = 1
+print('Z:')
+print(Z)
+print('Z_copy:')
+print(Z_copy)
+```
+
+In order to check whether the result of indexing is returning a view or a copy its base can be checked. If the base of an index is None, then the result is a copy.
+The allclose function used below returns True if two arrays are element-wise equal within some tolerance which is usually a very small number.
+If either array contains one or more NaNs, False is returned, and Infs treated as equal if they are in the same place in both arrays.
+```{python}
+import numpy as np
+np.random.seed(seed=5)
+Z = np.random.uniform(0,1,(6,5)) # creates a uniform distribution with values from 0 to 1, with 6 rows and 5 columns
+print(Z)
+
+Z1 = Z[:3,:] # start from first row, include up to the third row, then include every column
+Z2 = Z[[0,1,2], :] # include rows 0,1,2 and every column from those rows
+print(np.allclose(Z1,Z2)) # check if the two arrays are equivalent
+
+if Z1.base is Z:
+    print('Z1 base is Z')
+if Z2.base is Z:
+    print('Z2 base is Z')
+elif Z2.base is None:
+    print('Z2 base is None')
+```
+
+Whether or not a particular numpy function returns a view or a copy is dependent on the function. Below, ravel() will return a view when possible, while flatten() will always return a copy.
+```{python}
+import numpy as np
+Z = np.zeros((5,5))
+print(Z.ravel().base is Z)
+print(Z[::2,::2].ravel().base is Z)
+print(Z.flatten().base is Z)
+```
+
+Temporary Copy
+While copies of arrays can be done explicitly like in the case of fancy indexing, typically temporary or intermediate array copies are made
+that are then re-assigned to the base array. A good example of this is when using arithmetic on an array. An intermediate array is made, multiplied (or whatever operation)
+and then re-assigned to the base array.
+In the below code snippet, an array copy is made to hold the result of 2*X, 2*Y, and A. When the arrays are small as they are in this example,
+making an array copy will not significantly impact the runtime. However, if the arrays are large, this is not ideal.
+```{python}
+import numpy as np
+X = np.ones(10, dtype=np.int)
+Y = np.ones(10, dtype=np.int)
+A = 2*X + 2*Y
+print(A)
+```
+
+When the arrays are large, it is better to calculate the arithmetic without making an intermediate copy as shown below. In the code below, both X and Y are overwritten by the `np.multiply` methods, meaning that no new arrays need to be created in order to hold the new data which saves RAM and is faster than creating a new array.
+```{python}
+import numpy as np
+X = np.ones(10, dtype=np.int)
+Y = np.ones(10, dtype=np.int)
+np.multiply(X, 2, out=X) # multiply and overwrite X
+np.multiply(Y, 2, out=Y) # multiply and overwrite Y
+np.add(X, Y, out=X)
+print(X)
+```
+
+3.5 Conclusion
+If we have two vectors Z1 and Z2 and we would like to know if Z2 is a view of Z1, and if so that that view is.
+Z2 is created by accessing Z1 starting at element `1` and reading to element `-1` (not inclusive) by 'twos' so that every other element is aquired or Z1[start:stop:step]
+```{python}
+import numpy as np
+Z1 = np.arange(10).astype(np.int16)
+Z2 = Z1[1:-1:2]
+print('The two arrays')
+print(Z1)
+print(Z2)
+
+print('Is Z2 base Z1')
+print(Z2.base is Z1)
+step = Z2.strides[0] // Z1.strides[0]
+print(step)
+
+# now find the start and stop indices using byte_bounds with returns a pointer to the end-points of an array
+offset_start = np.byte_bounds(Z2)[0] - np.byte_bounds(Z1)[0]
+print(offset_start) # in bytes
+```
+
+4.1 Code Vectorization
+Code vectorization is helpful when the problem to be solved is inherently vectorizable, because numpy is good at expediting this process.
+Below is a simple example of how code can be vectorized.
+The following example zips together two lists in which each corresponding element in the list is combined together, and then each of those pairs is added together.
+```{python}
+def add_python(Z1, Z2):
+    return [z1+z2 for (z1,z2) in zip(Z1,Z2)]
+x=add_python([1],[2])
+print(x)
+```
+
+Using numpy
